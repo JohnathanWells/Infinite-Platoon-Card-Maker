@@ -21,26 +21,29 @@ namespace Infinite_Platoon_Card_Maker
 {
     public partial class MainWindow : Window
     {
+        enum cardtypes { Hero, Spell, Trap, Item };
+        readonly int[] ATT_NUM_BY_TYPE = { 10, 10, 10, 10 };
 
         Paragraph effectText = new Paragraph();
         Paragraph flavorText = new Paragraph();
         int currentCard = 0;
-
+        cardtypes typeSelected;
+        List<heroCard>[] CardLists = new List<heroCard>[4];
 
         class heroCard
         {
-            string name;
-            int soul;
-            int atk;
-            int def;
-            string type;
-            string effect;
-            string flavor;
-            string boost1;
-            string boost2;
-            string boost3;
+            public string name;
+            public int soul;
+            public int atk;
+            public int def;
+            public string type;
+            public string effect;
+            public string flavor;
+            public string boost1;
+            public string boost2;
+            public string boost3;
 
-            heroCard(string n, int s, int a, int d, string t, string e, string f, string b1, string b2, string b3)
+            public heroCard(string n, int s, int a, int d, string t, string e, string f, string b1, string b2, string b3)
             {
                 name = n;
                 soul = s;
@@ -59,7 +62,9 @@ namespace Infinite_Platoon_Card_Maker
         public MainWindow()
         {
             InitializeComponent();
-            FlavorInput.Text = "AAAAA";
+            typeSelected = cardtypes.Hero;
+            loadExcelIntoList(typeSelected);
+            fillFieldsWithData(typeSelected); 
         }
 
         private void frameLoad_Click(object sender, RoutedEventArgs e)
@@ -115,7 +120,6 @@ namespace Infinite_Platoon_Card_Maker
         private void EffectInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             TextRange temp = new TextRange(EffectInput.Document.ContentStart, EffectInput.Document.ContentEnd);
-            Console.WriteLine(temp.Text);
 
             effectText.Inlines.Clear();
 
@@ -140,19 +144,20 @@ namespace Infinite_Platoon_Card_Maker
             Description.Document.Blocks.Add(flavorText);
         }
 
-        private void readExcel(string fileDirectory)
+        private List<string> readExcel(string fileDirectory)
         {
             Excel.Application xlApp = new Excel.Application();
             Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(fileDirectory);
             Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
             Excel.Range xlRange = xlWorksheet.UsedRange;
+            List<string> lines = new List<string>();
 
             for (int i = 1; i <= xlRange.Rows.Count; i++)
             {
-                for (int j = i; j <= xlRange.Columns.Count; j++ )
+                for (int j = 1; j <= xlRange.Columns.Count; j++ )
                 {
                     if (xlRange[i, j] != null && xlRange.Cells[i, j].Value2 != null)
-                        Console.Write(xlRange.Cells[i, j].Value2.ToString() + "\t");
+                        lines.Add(xlRange.Cells[i, j].Value2.ToString());
                 }
             }
 
@@ -170,6 +175,8 @@ namespace Infinite_Platoon_Card_Maker
             //quit and release
             xlApp.Quit();
             Marshal.ReleaseComObject(xlApp);
+
+            return lines;
         }
 
         private void AttackInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -223,23 +230,48 @@ namespace Infinite_Platoon_Card_Maker
             AbilityBoost.Text = EffectBoostInput.Text;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            Rect rect = new Rect(new Point(0, 0), new Point(cardArea.Margin.Left + cardArea.ActualWidth + 20, cardArea.Margin.Top + cardArea.ActualHeight));
-            RenderTargetBitmap rtb = new RenderTargetBitmap((int)rect.Width,
-                (int)rect.Height, 100d, 100d, System.Windows.Media.PixelFormats.Default);
-            rtb.Render(cardArea);
+            saveCard();
+        }
 
-            var crop = new CroppedBitmap(rtb, new Int32Rect((int)Math.Floor(cardArea.Margin.Left + 20), (int)Math.Floor(cardArea.Margin.Top), (int)Math.Floor(cardArea.ActualWidth), (int)Math.Floor(cardArea.ActualHeight)));
+        private void saveCard()
+        {
+            Rect bounds = VisualTreeHelper.GetDescendantBounds(cardArea);
+            double dpi = 96d;
+            int odp = 0;
+            int boundWidth = (int)bounds.Width;
+            int boundHeight = (int)bounds.Height;
+            //Console.Write(( (float)boundWidth / (float)boundHeight) + "\t" + ((float)boundHeight / (float)boundWidth) + "\n");
 
-            //endcode as PNG
-            BitmapEncoder pngEncoder = new PngBitmapEncoder();
-            pngEncoder.Frames.Add(BitmapFrame.Create(crop));
 
-            //save to memory stream
-            using (var fs = System.IO.File.OpenWrite( System.AppDomain.CurrentDomain.BaseDirectory + "/Heroes/" + HeroName.Content + ".png"))
+            RenderTargetBitmap rtb = new RenderTargetBitmap(boundWidth + (int)(((float)boundHeight / (float)boundHeight) * odp), boundHeight + (int)(((float)boundHeight / (float)boundWidth) * odp), dpi, dpi, System.Windows.Media.PixelFormats.Default);
+
+
+            DrawingVisual dv = new DrawingVisual();
+            using (DrawingContext dc = dv.RenderOpen())
             {
-                pngEncoder.Save(fs);
+                VisualBrush vb = new VisualBrush(cardArea);
+                dc.DrawRectangle(vb, null, new Rect(new Point(), bounds.Size));
+            }
+
+            rtb.Render(dv);
+
+            BitmapEncoder pngEncoder = new PngBitmapEncoder();
+            pngEncoder.Frames.Add(BitmapFrame.Create(rtb));
+
+            try
+            {
+                System.IO.MemoryStream ms = new System.IO.MemoryStream();
+
+                pngEncoder.Save(ms);
+                ms.Close();
+
+                System.IO.File.WriteAllBytes(System.AppDomain.CurrentDomain.BaseDirectory + "/Heroes/" + HeroName.Content + ".png", ms.ToArray());
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -265,16 +297,79 @@ namespace Infinite_Platoon_Card_Maker
 
         private void nextCardButton_Click(object sender, RoutedEventArgs e)
         {
-            currentCard++;
+            currentCard = Clamp(currentCard + 1, 0, CardLists[(int)typeSelected].Count - 1);
 
-            readExcel(Environment.CurrentDirectory.ToString() + "\\HeroCards.xlsx");
+            fillFieldsWithData(typeSelected);
         }
 
         private void lastCardButton_Click(object sender, RoutedEventArgs e)
         {
-            currentCard--;
-
+            currentCard = Clamp(currentCard - 1, 0, CardLists[(int)typeSelected].Count - 1);
+            polyline.Points.Add(new Point(cardArea.Margin.Left + 18, cardArea.Margin.Top));
+            polyline.Points.Add(new Point((this.Content as FrameworkElement).ActualWidth - cardArea.Margin.Right - 11, (this.Content as FrameworkElement).ActualHeight - cardArea.Margin.Bottom + 9));
+            fillFieldsWithData(typeSelected);
         }
 
+        private void loadExcelIntoList(cardtypes type)
+        {
+            switch (type)
+            {
+                case cardtypes.Hero:
+                    {
+                        List<heroCard> heroes = new List<heroCard>();
+                        List<string> List = readExcel(Environment.CurrentDirectory.ToString() + "\\HeroCards.xlsx");
+                        int offset = 0;
+                        int rows = List.Count / ATT_NUM_BY_TYPE[(int)type];
+
+                        for (int n = 1; n < rows; n++ )
+                        {
+                            offset = 10 * n;
+
+                            heroes.Add(new heroCard(List[offset + 0], int.Parse(List[offset + 1]), int.Parse(List[2 + offset]), int.Parse(List[3 + offset]), List[4 + offset], List[5 + offset], List[6 + offset], (List[7 + offset] == "" || List[7+offset] == " ") ? " " : string.Concat("[", List[7 + offset], "]"), string.Concat("[", returnWithSign(List[8 + offset]) + " ATK]"), string.Concat("[", returnWithSign(List[9 + offset]), " DEF]")));
+                        }
+
+                        CardLists[(int)cardtypes.Hero] = heroes;
+                        return;
+                    }
+            };
+            return;
+        }
+
+        private void fillFieldsWithData(cardtypes type)
+        {
+            switch (type)
+            {
+                case cardtypes.Hero:
+                {
+                    NameInput.Text = CardLists[(int)type][currentCard].name;
+                    SoulInput.Text = CardLists[(int)type][currentCard].soul.ToString();
+                    illustration.Source = null;
+                    TypeInput.Text = CardLists[(int)type][currentCard].type;
+                    EffectInput.Document.Blocks.Clear();
+                    EffectInput.Document.Blocks.Add(new Paragraph( new Run(CardLists[(int)type][currentCard].effect)));
+                    FlavorInput.Text = CardLists[(int)type][currentCard].flavor;
+                    AttackInput.Text = CardLists[(int)type][currentCard].atk.ToString();
+                    DefenseInput.Text = CardLists[(int)type][currentCard].def.ToString();
+                    AttackBoostInput.Text = CardLists[(int)type][currentCard].boost2;
+                    DefenseBoostInput.Text = CardLists[(int)type][currentCard].boost3;
+                    EffectBoostInput.Text = CardLists[(int)type][currentCard].boost1;
+                    //PublicationInfo.Text = listOfHeroes[currentCard].;
+                    return;
+                }
+            }
+        }
+
+        public static int Clamp(int value, int min, int max)
+        {
+            return (value < min) ? min : (value > max) ? max : value;
+        }
+
+        public string returnWithSign(string str)
+        {
+            if (float.Parse(str) > 0)
+                return "+" + str;
+            else
+                return str;
+        }
     }
 }
