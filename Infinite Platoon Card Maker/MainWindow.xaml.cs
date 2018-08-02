@@ -16,6 +16,9 @@ using System.Windows.Shapes;
 using Microsoft.Win32;
 using System.Text.RegularExpressions;
 using Excel = Microsoft.Office.Interop.Excel;
+using HtmlAgilityPack;
+using HTMLConverter;
+
 
 namespace Infinite_Platoon_Card_Maker
 {
@@ -24,8 +27,10 @@ namespace Infinite_Platoon_Card_Maker
         enum cardtypes { Hero, Spell, Trap, Item };
         readonly int[] ATT_NUM_BY_TYPE = { 10, 10, 10, 10 };
 
-        Paragraph effectText = new Paragraph();
-        Paragraph flavorText = new Paragraph();
+        string effectText;
+        string flavorText;
+        BlockCollection effectBlock;
+        BlockCollection flavorBlock;
         int currentCard = 0;
         cardtypes typeSelected;
         List<heroCard>[] CardLists = new List<heroCard>[4];
@@ -38,6 +43,7 @@ namespace Infinite_Platoon_Card_Maker
             public int def;
             public string type;
             public string effect;
+            //public FlowDocument effect;
             public string flavor;
             public string boost1;
             public string boost2;
@@ -66,6 +72,114 @@ namespace Infinite_Platoon_Card_Maker
             loadExcelIntoList(typeSelected);
             fillFieldsWithData(typeSelected); 
         }
+
+        #region excelFunctions
+
+        private List<string> readExcel(string fileDirectory)
+        {
+            Excel.Application xlApp = new Excel.Application();
+            Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(fileDirectory);
+            Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
+            Excel.Range xlRange = xlWorksheet.UsedRange;
+            List<string> lines = new List<string>();
+
+            for (int i = 1; i <= xlRange.Rows.Count; i++)
+            {
+                for (int j = 1; j <= xlRange.Columns.Count; j++)
+                {
+                    if (xlRange[i, j] != null && xlRange.Cells[i, j].Value2 != null)
+                    {
+                        //Object x = xlRange.Cells[i, j].Value2;
+                        //xlRange.Cells[i, j].Copy();
+                        //Console.WriteLine(Clipboard.GetText(TextDataFormat.Rtf).ToString());
+                        //lines.Add(Clipboard.GetText(TextDataFormat.Rtf));
+                        lines.Add(xlRange.Cells[i, j].Value2.ToString());
+                    }
+                }
+            }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            //release com objects to fully kill excel process from running in the background
+            Marshal.ReleaseComObject(xlRange);
+            Marshal.ReleaseComObject(xlWorksheet);
+
+            //close and release
+            xlWorkbook.Close();
+            Marshal.ReleaseComObject(xlWorkbook);
+
+            //quit and release
+            xlApp.Quit();
+            Marshal.ReleaseComObject(xlApp);
+
+            return lines;
+        }
+
+        private void loadExcelIntoList(cardtypes type)
+        {
+            switch (type)
+            {
+                case cardtypes.Hero:
+                    {
+                        List<heroCard> heroes = new List<heroCard>();
+                        List<string> List = readExcel(Environment.CurrentDirectory.ToString() + "\\HeroCards.xlsx");
+                        int offset = 0;
+                        int rows = List.Count / ATT_NUM_BY_TYPE[(int)type];
+
+                        for (int n = 1; n < rows; n++)
+                        {
+                            offset = 10 * n;
+
+                            heroes.Add(new heroCard((List[offset + 0]), int.Parse((List[offset + 1])), int.Parse((List[2 + offset])), int.Parse((List[3 + offset])), (List[4 + offset]), (List[5 + offset]), (List[6 + offset]), ((List[7 + offset]) == "" || (List[7 + offset]) == " ") ? " " : string.Concat("[", List[7 + offset], "]"), string.Concat("[", returnWithSign((List[8 + offset])) + " ATK]"), string.Concat("[", returnWithSign((List[9 + offset])), " DEF]")));
+                        }
+
+                        CardLists[(int)cardtypes.Hero] = heroes;
+                        return;
+                    }
+            };
+            return;
+        }
+
+        public string turnFlowDocumentToString(FlowDocument from)
+        {
+            return new TextRange(from.ContentStart, from.ContentEnd).Text;
+        }
+
+        private void clearName_Click(object sender, RoutedEventArgs e)
+        {
+            NameInput.Text = "";
+            SoulInput.Text = "";
+            illustration.Source = null;
+            TypeInput.Text = "";
+            EffectInput.Text = "";
+            //EffectInput.Document.Blocks.Clear();
+            FlavorInput.Text = "";
+            AttackInput.Text = "";
+            DefenseInput.Text = "";
+            PublicationInfo.Text = "";
+
+
+        }
+
+        private void nextCardButton_Click(object sender, RoutedEventArgs e)
+        {
+            currentCard = Clamp(currentCard + 1, 0, CardLists[(int)typeSelected].Count - 1);
+
+            fillFieldsWithData(typeSelected);
+        }
+
+        private void lastCardButton_Click(object sender, RoutedEventArgs e)
+        {
+            currentCard = Clamp(currentCard - 1, 0, CardLists[(int)typeSelected].Count - 1);
+            //polyline.Points.Add(new Point(cardArea.Margin.Left + 18, cardArea.Margin.Top));
+            //polyline.Points.Add(new Point((this.Content as FrameworkElement).ActualWidth - cardArea.Margin.Right - 11, (this.Content as FrameworkElement).ActualHeight - cardArea.Margin.Bottom + 9));
+            fillFieldsWithData(typeSelected);
+        }
+
+        #endregion
+
+        #region OnChangedFunctions
 
         private void frameLoad_Click(object sender, RoutedEventArgs e)
         {
@@ -102,14 +216,14 @@ namespace Infinite_Platoon_Card_Maker
         {
             HeroName.Content = NameInput.Text;
 
-            if (NameInput.Text.Length < 25)
-            {
-                HeroName.FontSize = 24;
-            }
-            else
-            {
-                HeroName.FontSize = 24 - Math.Floor((double)((NameInput.Text.Length - 10) / 4));
-            }
+            //if (NameInput.Text.Length < 25)
+            //{
+            //    HeroName.FontSize = 24;
+            //}
+            //else
+            //{
+            //    HeroName.FontSize = 24 - Math.Floor((double)((NameInput.Text.Length - 10) / 4));
+            //}
         }
 
         private void TypeInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -119,79 +233,25 @@ namespace Infinite_Platoon_Card_Maker
 
         private void EffectInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            TextRange temp = new TextRange(EffectInput.Document.ContentStart, EffectInput.Document.ContentEnd);
+            effectText = EffectInput.Text;
+            //effectBlock = EffectInput.Document.Blocks;
+            //TextRange temp = new TextRange(EffectInput.Document.ContentStart, EffectInput.Document.ContentEnd);
 
-            effectText.Inlines.Clear();
+            //effectText.Inlines.Clear();
 
-            effectText.Inlines.Add(new Run(temp.Text));
+            //effectText.Inlines.Add(new Run(temp.Text));
 
             updateDescription();
         }
 
         private void FlavorInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            flavorText.Inlines.Clear();
-            flavorText.Inlines.Add(new Italic(new Run(FlavorInput.Text)));
+            //flavorText = FlavorInput.Text;
+
+            //flavorText.Inlines.Clear();
+            //flavorText.Inlines.Add(new Italic(new Run(FlavorInput.Text)));
 
             updateDescription();
-        }
-
-        private void updateDescription()
-        {
-            Description.Document.Blocks.Clear();
-
-            Description.Document.Blocks.Add(effectText);
-            Description.Document.Blocks.Add(flavorText);
-        }
-
-        private List<string> readExcel(string fileDirectory)
-        {
-            Excel.Application xlApp = new Excel.Application();
-            Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(fileDirectory);
-            Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
-            Excel.Range xlRange = xlWorksheet.UsedRange;
-            List<string> lines = new List<string>();
-
-            for (int i = 1; i <= xlRange.Rows.Count; i++)
-            {
-                for (int j = 1; j <= xlRange.Columns.Count; j++ )
-                {
-                    if (xlRange[i, j] != null && xlRange.Cells[i, j].Value2 != null)
-                        lines.Add(xlRange.Cells[i, j].Value2.ToString());
-                }
-            }
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            //release com objects to fully kill excel process from running in the background
-            Marshal.ReleaseComObject(xlRange);
-            Marshal.ReleaseComObject(xlWorksheet);
-
-            //close and release
-            xlWorkbook.Close();
-            Marshal.ReleaseComObject(xlWorkbook);
-
-            //quit and release
-            xlApp.Quit();
-            Marshal.ReleaseComObject(xlApp);
-
-            return lines;
-        }
-
-        private void AttackInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            onlyNumbers(e);
-        }
-
-        private void DefenseInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            onlyNumbers(e);
-        }
-
-        private void SoulInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            onlyNumbers(e);
         }
 
         private void AttackInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -219,17 +279,38 @@ namespace Infinite_Platoon_Card_Maker
             DefenseBoost.Text = DefenseBoostInput.Text;
         }
 
-        private void onlyNumbers(TextCompositionEventArgs e)
-        {
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
-        }
-
         private void EffectBoostInput_TextChanged(object sender, TextChangedEventArgs e)
         {
             AbilityBoost.Text = EffectBoostInput.Text;
         }
 
+        #endregion
+
+        #region PreviewTextInput
+
+        private void AttackInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            onlyNumbers(e);
+        }
+
+        private void DefenseInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            onlyNumbers(e);
+        }
+
+        private void SoulInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            onlyNumbers(e);
+        }
+
+        private void PublicationInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            PublicationInfo.Text = PublicationInput.Text;
+        }
+
+        #endregion
+
+        #region savingFunctions
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             saveCard();
@@ -275,64 +356,13 @@ namespace Infinite_Platoon_Card_Maker
             }
         }
 
-        private void PublicationInput_TextChanged(object sender, TextChangedEventArgs e)
+        #endregion
+
+        #region helperFunctions
+        private void onlyNumbers(TextCompositionEventArgs e)
         {
-            PublicationInfo.Text = PublicationInput.Text;
-        }
-
-        private void clearName_Click(object sender, RoutedEventArgs e)
-        {
-            NameInput.Text = "";
-            SoulInput.Text = "";   
-            illustration.Source = null;
-            TypeInput.Text = "";
-            EffectInput.Document.Blocks.Clear();
-            FlavorInput.Text = "";
-            AttackInput.Text = "";
-            DefenseInput.Text = "";
-            PublicationInfo.Text = "";
-
-
-        }
-
-        private void nextCardButton_Click(object sender, RoutedEventArgs e)
-        {
-            currentCard = Clamp(currentCard + 1, 0, CardLists[(int)typeSelected].Count - 1);
-
-            fillFieldsWithData(typeSelected);
-        }
-
-        private void lastCardButton_Click(object sender, RoutedEventArgs e)
-        {
-            currentCard = Clamp(currentCard - 1, 0, CardLists[(int)typeSelected].Count - 1);
-            polyline.Points.Add(new Point(cardArea.Margin.Left + 18, cardArea.Margin.Top));
-            polyline.Points.Add(new Point((this.Content as FrameworkElement).ActualWidth - cardArea.Margin.Right - 11, (this.Content as FrameworkElement).ActualHeight - cardArea.Margin.Bottom + 9));
-            fillFieldsWithData(typeSelected);
-        }
-
-        private void loadExcelIntoList(cardtypes type)
-        {
-            switch (type)
-            {
-                case cardtypes.Hero:
-                    {
-                        List<heroCard> heroes = new List<heroCard>();
-                        List<string> List = readExcel(Environment.CurrentDirectory.ToString() + "\\HeroCards.xlsx");
-                        int offset = 0;
-                        int rows = List.Count / ATT_NUM_BY_TYPE[(int)type];
-
-                        for (int n = 1; n < rows; n++ )
-                        {
-                            offset = 10 * n;
-
-                            heroes.Add(new heroCard(List[offset + 0], int.Parse(List[offset + 1]), int.Parse(List[2 + offset]), int.Parse(List[3 + offset]), List[4 + offset], List[5 + offset], List[6 + offset], (List[7 + offset] == "" || List[7+offset] == " ") ? " " : string.Concat("[", List[7 + offset], "]"), string.Concat("[", returnWithSign(List[8 + offset]) + " ATK]"), string.Concat("[", returnWithSign(List[9 + offset]), " DEF]")));
-                        }
-
-                        CardLists[(int)cardtypes.Hero] = heroes;
-                        return;
-                    }
-            };
-            return;
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
         }
 
         private void fillFieldsWithData(cardtypes type)
@@ -345,8 +375,9 @@ namespace Infinite_Platoon_Card_Maker
                     SoulInput.Text = CardLists[(int)type][currentCard].soul.ToString();
                     illustration.Source = null;
                     TypeInput.Text = CardLists[(int)type][currentCard].type;
-                    EffectInput.Document.Blocks.Clear();
-                    EffectInput.Document.Blocks.Add(new Paragraph( new Run(CardLists[(int)type][currentCard].effect)));
+                    //EffectInput.Text = CardLists[(int)type][currentCard].effect;
+                    EffectInput.AppendText(CardLists[(int)type][currentCard].effect);
+                    //EffectInput.Document = CardLists[(int)type][currentCard].effect;
                     FlavorInput.Text = CardLists[(int)type][currentCard].flavor;
                     AttackInput.Text = CardLists[(int)type][currentCard].atk.ToString();
                     DefenseInput.Text = CardLists[(int)type][currentCard].def.ToString();
@@ -371,5 +402,44 @@ namespace Infinite_Platoon_Card_Maker
             else
                 return str;
         }
+
+        private void updateDescription()
+        {
+            Description.Document.Blocks.Clear();
+
+            Description.Document = createClockFromString(effectText);
+            //Description.Document.Blocks.Add(effectText);
+            Description.AppendText(flavorText);
+            //Description.Document.Blocks.Add(new Paragraph(new Run(effectText + "\n\n" + flavorText)));
+
+            //Console.Write("DESCRIPTION: " + Description.Document.Blocks.);
+        }
+
+        private FlowDocument createClockFromString(string str)
+        {
+            if (str != null)
+            {
+                var htmlDoc = new HtmlDocument();
+                htmlDoc.LoadHtml(str);
+
+                var htmlBody = htmlDoc.DocumentNode.SelectSingleNode("//body");
+
+                FlowDocument temp = new FlowDocument();
+
+                if (htmlBody != null)
+                {
+                    temp.DataContext = HTMLConverter.HtmlToXamlConverter.ConvertHtmlToXaml(htmlBody.ToString(), false);
+
+                }
+
+                return temp;
+
+            }
+            else
+                return new FlowDocument();
+        }
+
+
+        #endregion
     }
 }

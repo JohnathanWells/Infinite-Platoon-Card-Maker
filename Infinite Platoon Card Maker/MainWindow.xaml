@@ -9,39 +9,39 @@
             <ColumnDefinition Width="10*" />
         </Grid.ColumnDefinitions>
 
-        <Canvas Name="cardArea" Width="495" Height="675" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="477,30,0,3" >
+        <Canvas Name="cardArea" Width="825" Height="1125" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="477,30,0,3" >
             <Canvas.RenderTransform>
                 <TransformGroup>
-                    <ScaleTransform/>
+                    <ScaleTransform ScaleX="0.6" ScaleY="0.6"/>
                     <SkewTransform/>
                     <RotateTransform/>
                     <TranslateTransform X="0" Y="0"/>
                 </TransformGroup>
             </Canvas.RenderTransform>
 
-            <Image Name="illustration" Grid.Column="1" Width="348" Height="348" VerticalAlignment="Top" HorizontalAlignment="Left" Stretch="Fill"  Canvas.Top="90" Canvas.Left="89" />
+            <Image Name="illustration" Grid.Column="1" Width="564" Height="564" VerticalAlignment="Top" HorizontalAlignment="Left" Stretch="UniformToFill"  Canvas.Top="161" Canvas.Left="158" />
 
-            <Image Margin="0,0,16,12" Name="cardframe" Stretch="Fill" Grid.Column="1" Width="495" Height="675" 
-               HorizontalAlignment="Right" VerticalAlignment="Top" Source="Picture/template.png" />
+            <Image Name="cardframe" Stretch="UniformToFill" Grid.Column="1" Width="825" Height="1126" 
+               HorizontalAlignment="Right" VerticalAlignment="Top" Source="Picture/template.png" RenderTransformOrigin="0,0" />
 
 
             <Label x:Name="HeroName" Content="Name of Hero" Grid.Column="1" HorizontalAlignment="Left" 
-               VerticalAlignment="Bottom" Width="266" FontSize="24" FontWeight="Bold" Canvas.Left="103" Canvas.Top="64"/>
+               VerticalAlignment="Bottom" Width="443" FontSize="34" FontWeight="Bold" Canvas.Left="174" Canvas.Top="118" Height="43" FontFamily="Times New Roman"/>
 
-            <Label x:Name="Soul" Content="1" Grid.Column="1" Width="43" Height="60" HorizontalAlignment="Center" 
-        	VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="36" FontWeight="Bold" Canvas.Left="379" Canvas.Top="66"/>
+            <Label x:Name="Soul" Content="1" Grid.Column="1" Width="54" Height="50" HorizontalAlignment="Center" 
+        	VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="40" FontWeight="Bold" Canvas.Left="641" Canvas.Top="133" FontFamily="Times New Roman"/>
 
             <Label x:Name="HeroType" Content="Type of Hero" Grid.Column="1" HorizontalAlignment="Center" 
-        	VerticalAlignment="Top" Width="266" FontSize="20" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Left="125" Canvas.Top="409"/>
+        	VerticalAlignment="Top" Width="364" FontSize="30" FontWeight="Bold" HorizontalContentAlignment="Center" Canvas.Left="256" Canvas.Top="685" Height="46" FontFamily="Times New Roman"/>
 
-            <Label Name="Attack" Content="1" Grid.Column="1" Width="43" Height="60" HorizontalAlignment="Center" 
-               VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="36" FontWeight="Bold" Canvas.Left="375" Canvas.Top="454"/>
+            <Label Name="Attack" Content="1" Grid.Column="1" Width="54" Height="50" HorizontalAlignment="Center" 
+               VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="40" FontWeight="Bold" Canvas.Left="634" Canvas.Top="780" FontFamily="Times New Roman" BorderThickness="0" Margin="0"/>
 
-            <Label Name="Defense" Content="1" Grid.Column="1" Width="43" Height="60" HorizontalAlignment="Center" 
-               VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="36" FontWeight="Bold" Canvas.Left="375" Canvas.Top="528"/>
+            <Label Name="Defense" Content="1" Grid.Column="1" Width="54" Height="57" HorizontalAlignment="Center" 
+               VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="40" FontWeight="Bold" Canvas.Left="635" Canvas.Top="906" FontFamily="Times New Roman"/>
 
             <RichTextBox Name="Description" Grid.Column="1" HorizontalAlignment="Left"  
-               Width="247" Height="124" VerticalAlignment="Top" FontSize="14" Background="{x:Null}" BorderBrush="{x:Null}" Foreground="Black" IsReadOnly="True" Canvas.Left="111" Canvas.Top="457">
+               Width="406" Height="209" VerticalAlignment="Top" FontSize="26" Background="{x:Null}" BorderBrush="{x:Null}" Foreground="Black" IsReadOnly="True" Canvas.Left="183" Canvas.Top="755" FontFamily="Times New Roman" AutoWordSelection="False">
                 <FlowDocument>
                     <Paragraph>
                         <Run Text="Lare"/>
@@ -53,7 +53,7 @@
                 </FlowDocument>
             </RichTextBox>
 
-            <TextBlock Name="DefenseBoost" Text="+1 Atk" Grid.Column="1" Width="218" Height="28" HorizontalAlignment="Left" TextWrapping="NoWrap"  VerticalAlignment="Top" Foreground="White" FontSize="18" RenderTransformOrigin="0.5,0.5" Canvas.Left="-26" Canvas.Top="58" >
+            <TextBlock Name="DefenseBoost" Text="[+1 Atk]" Grid.Column="1" Width="364" Height="49" HorizontalAlignment="Left" TextWrapping="NoWrap"  VerticalAlignment="Top" Foreground="White" FontSize="40" RenderTransformOrigin="0.5,0.5" Canvas.Left="-45" Canvas.Top="330" TextAlignment="Right" FontFamily="Times New Roman" TextTrimming="CharacterEllipsis" >
                 <TextBlock.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform/>
@@ -64,7 +64,7 @@
                 </TextBlock.RenderTransform>
             </TextBlock>
 
-            <TextBlock  Name="AttackBoost" Text="+1 Atk" Grid.Column="1" Width="218" Height="29" HorizontalAlignment="Left" TextWrapping="NoWrap"  VerticalAlignment="Top" Foreground="White" FontSize="18" RenderTransformOrigin="0.5,0.5" Canvas.Left="-26" Canvas.Top="162" >
+            <TextBlock  Name="AttackBoost" Text="[+1 Atk]" Grid.Column="1" Width="364" Height="48" HorizontalAlignment="Left" TextWrapping="NoWrap"  VerticalAlignment="Top" Foreground="White" FontSize="40" RenderTransformOrigin="0.5,0.5" Canvas.Left="-45" Canvas.Top="264" FontFamily="Times New Roman" TextTrimming="CharacterEllipsis" >
                 <TextBlock.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform/>
@@ -75,7 +75,7 @@
                 </TextBlock.RenderTransform>
             </TextBlock>
 
-            <TextBlock Name="AbilityBoost" Grid.Column="1" HorizontalAlignment="Left" Height="29" TextWrapping="NoWrap" Text="[Ability]" VerticalAlignment="Top" Width="218" RenderTransformOrigin="0.5,0.5" FontWeight="Bold" FontSize="18" Foreground="White" Canvas.Top="472" Canvas.Left="-28">
+            <TextBlock Name="AbilityBoost" Grid.Column="1" HorizontalAlignment="Left" Height="48" Text="[Ability]" VerticalAlignment="Top" Width="427" RenderTransformOrigin="0.5,0.5" FontWeight="Bold" FontSize="40" Foreground="White" Canvas.Top="749" Canvas.Left="-78" FontFamily="Times New Roman" IsHitTestVisible="False" TextTrimming="CharacterEllipsis">
                 <TextBlock.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform/>
@@ -86,7 +86,7 @@
                 </TextBlock.RenderTransform>
             </TextBlock>
 
-            <TextBlock Name="PublicationInfo" Text="100/100     Mike Ibarra, 2017. " Width="250" Canvas.Left="111" Canvas.Top="592" TextWrapping="NoWrap"/>
+            <TextBlock Name="PublicationInfo" Text="100/100     Mike Ibarra, 2017. " Width="406" Canvas.Left="183" Canvas.Top="987" TextWrapping="NoWrap" Height="24" FontSize="22" FontStyle="Italic" FontFamily="Times New Roman"/>
 
 
         </Canvas>
@@ -110,7 +110,7 @@
         <TextBox x:Name="TypeInput" Grid.Column="1" HorizontalAlignment="Left" Width="178" Height="26" Margin="27.8,234,0,0" TextWrapping="WrapWithOverflow" 
         	Text="Type of Hero" VerticalAlignment="Top" Background="Transparent" TextChanged="TypeInput_TextChanged" />
 
-        <RichTextBox x:Name="EffectInput" Grid.Column="1" HorizontalAlignment="Left" Height="168" Margin="29.8,276,0,0"  
+        <TextBox x:Name="EffectInput" Grid.Column="1" HorizontalAlignment="Left" Height="168" Margin="29.8,276,0,0"  
                  VerticalAlignment="Top" Width="179" TextChanged="EffectInput_TextChanged" AcceptsReturn="True"/>
 
         <TextBox Name="AttackInput" Grid.Column="1" HorizontalAlignment="Left" Margin="232.8,307,0,0" TextWrapping="Wrap" Text="A" VerticalAlignment="Top" Height="24" Width="29" 
