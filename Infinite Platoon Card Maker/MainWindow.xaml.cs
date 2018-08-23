@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using Excel = Microsoft.Office.Interop.Excel;
 using HtmlAgilityPack;
 using HTMLConverter;
+using System.IO;
 
 
 namespace Infinite_Platoon_Card_Maker
@@ -29,8 +30,8 @@ namespace Infinite_Platoon_Card_Maker
 
         string effectText;
         string flavorText;
-        BlockCollection effectBlock;
-        BlockCollection flavorBlock;
+        FlowDocument effectBlock = new FlowDocument();
+        FlowDocument flavorBlock = new FlowDocument();
         int currentCard = 0;
         cardtypes typeSelected;
         List<heroCard>[] CardLists = new List<heroCard>[4];
@@ -152,9 +153,10 @@ namespace Infinite_Platoon_Card_Maker
             SoulInput.Text = "";
             illustration.Source = null;
             TypeInput.Text = "";
-            EffectInput.Text = "";
-            //EffectInput.Document.Blocks.Clear();
-            FlavorInput.Text = "";
+            //EffectInput.Text = "";
+            EffectInput.Document.Blocks.Clear();
+            //FlavorInput.Text = "";
+            FlavorInput.Document.Blocks.Clear();
             AttackInput.Text = "";
             DefenseInput.Text = "";
             PublicationInfo.Text = "";
@@ -233,13 +235,13 @@ namespace Infinite_Platoon_Card_Maker
 
         private void EffectInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            effectText = EffectInput.Text;
+            //effectText = EffectInput.Text;
             //effectBlock = EffectInput.Document.Blocks;
-            //TextRange temp = new TextRange(EffectInput.Document.ContentStart, EffectInput.Document.ContentEnd);
-
-            //effectText.Inlines.Clear();
-
-            //effectText.Inlines.Add(new Run(temp.Text));
+            TextRange temp = new TextRange(EffectInput.Document.ContentStart, EffectInput.Document.ContentEnd);
+            effectText = temp.ToString();
+            effectBlock = EffectInput.Document;
+            //effectBlock.Inlines.Add(new Run(temp.Text));
+           // effectBlock.Inlines.Clear();
 
             updateDescription();
         }
@@ -250,6 +252,7 @@ namespace Infinite_Platoon_Card_Maker
 
             //flavorText.Inlines.Clear();
             //flavorText.Inlines.Add(new Italic(new Run(FlavorInput.Text)));
+            flavorBlock = FlavorInput.Document;
 
             updateDescription();
         }
@@ -378,7 +381,8 @@ namespace Infinite_Platoon_Card_Maker
                     //EffectInput.Text = CardLists[(int)type][currentCard].effect;
                     EffectInput.AppendText(CardLists[(int)type][currentCard].effect);
                     //EffectInput.Document = CardLists[(int)type][currentCard].effect;
-                    FlavorInput.Text = CardLists[(int)type][currentCard].flavor;
+                    //FlavorInput.Text = CardLists[(int)type][currentCard].flavor;
+                    FlavorInput.AppendText(CardLists[(int)type][currentCard].flavor);
                     AttackInput.Text = CardLists[(int)type][currentCard].atk.ToString();
                     DefenseInput.Text = CardLists[(int)type][currentCard].def.ToString();
                     AttackBoostInput.Text = CardLists[(int)type][currentCard].boost2;
@@ -407,36 +411,27 @@ namespace Infinite_Platoon_Card_Maker
         {
             Description.Document.Blocks.Clear();
 
-            Description.Document = createClockFromString(effectText);
-            //Description.Document.Blocks.Add(effectText);
-            Description.AppendText(flavorText);
+            //Description.Document = createClockFromString(effectText);
+            //Description.Document.Blocks.Add(new Paragraph(new Run(effectText)));
+            AddDocument(effectBlock, Description.Document);
+            //Description.AppendText(flavorText);
+            Description.AppendText("\n");
+            AddDocument(flavorBlock, Description.Document);
+            //Description.Document.Blocks.Add(new Paragraph(new Run(flavorText)));
             //Description.Document.Blocks.Add(new Paragraph(new Run(effectText + "\n\n" + flavorText)));
 
             //Console.Write("DESCRIPTION: " + Description.Document.Blocks.);
         }
 
-        private FlowDocument createClockFromString(string str)
+        public static void AddDocument(FlowDocument from, FlowDocument to)
         {
-            if (str != null)
-            {
-                var htmlDoc = new HtmlDocument();
-                htmlDoc.LoadHtml(str);
+            TextRange range = new TextRange(from.ContentStart, from.ContentEnd);
+            MemoryStream stream = new MemoryStream();
+            System.Windows.Markup.XamlWriter.Save(range, stream);
+            range.Save(stream, DataFormats.XamlPackage);
 
-                var htmlBody = htmlDoc.DocumentNode.SelectSingleNode("//body");
-
-                FlowDocument temp = new FlowDocument();
-
-                if (htmlBody != null)
-                {
-                    temp.DataContext = HTMLConverter.HtmlToXamlConverter.ConvertHtmlToXaml(htmlBody.ToString(), false);
-
-                }
-
-                return temp;
-
-            }
-            else
-                return new FlowDocument();
+            TextRange range2 = new TextRange(to.ContentEnd, to.ContentEnd);
+            range2.Load(stream, DataFormats.XamlPackage);
         }
 
 

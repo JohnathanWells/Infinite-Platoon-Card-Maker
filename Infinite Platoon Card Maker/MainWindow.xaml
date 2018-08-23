@@ -110,7 +110,7 @@
         <TextBox x:Name="TypeInput" Grid.Column="1" HorizontalAlignment="Left" Width="178" Height="26" Margin="27.8,234,0,0" TextWrapping="WrapWithOverflow" 
         	Text="Type of Hero" VerticalAlignment="Top" Background="Transparent" TextChanged="TypeInput_TextChanged" />
 
-        <TextBox x:Name="EffectInput" Grid.Column="1" HorizontalAlignment="Left" Height="168" Margin="29.8,276,0,0"  
+        <RichTextBox x:Name="EffectInput" Grid.Column="1" HorizontalAlignment="Left" Height="168" Margin="29.8,276,0,0"  
                  VerticalAlignment="Top" Width="179" TextChanged="EffectInput_TextChanged" AcceptsReturn="True"/>
 
         <TextBox Name="AttackInput" Grid.Column="1" HorizontalAlignment="Left" Margin="232.8,307,0,0" TextWrapping="Wrap" Text="A" VerticalAlignment="Top" Height="24" Width="29" 
@@ -119,8 +119,7 @@
         <TextBox Name="DefenseInput" Grid.Column="1" HorizontalAlignment="Left" Margin="232.8,352,0,0" TextWrapping="Wrap" Text="D" VerticalAlignment="Top" Height="24" Width="29" 
                  TextChanged="DefenseInput_TextChanged" PreviewTextInput="DefenseInput_PreviewTextInput"/>
 
-        <TextBox x:Name="FlavorInput" Grid.Column="1" HorizontalAlignment="Left" Height="168" Margin="32.8,475,0,0" TextWrapping="Wrap" 
-        	Text="TextBox" VerticalAlignment="Top" Width="179" TextChanged="FlavorInput_TextChanged" AcceptsReturn="True"/>
+        <RichTextBox x:Name="FlavorInput" Grid.Column="1" HorizontalAlignment="Left" Height="168" Margin="32.8,475,0,0" VerticalAlignment="Top" Width="179" TextChanged="FlavorInput_TextChanged" AcceptsReturn="True"/>
 
         <TextBox x:Name="PublicationInput" Text="[ID] [Illustrator], [Year].        [Expansion]" Grid.Column="1" HorizontalAlignment="Left" Margin="32.8,673,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="24" Width="179" 
         	TextChanged="PublicationInput_TextChanged"/>
