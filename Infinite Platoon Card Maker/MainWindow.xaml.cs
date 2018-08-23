@@ -52,6 +52,7 @@ namespace Infinite_Platoon_Card_Maker
 
             public heroCard(string n, int s, int a, int d, string t, string e, string f, string b1, string b2, string b3)
             {
+                Console.WriteLine("Phresta");
                 name = n;
                 soul = s;
                 atk = a;
@@ -78,6 +79,44 @@ namespace Infinite_Platoon_Card_Maker
 
         private List<string> readExcel(string fileDirectory)
         {
+            //Excel.Application xlApp = new Excel.Application();
+            //Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(fileDirectory);
+            //Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
+            //Excel.Range xlRange = xlWorksheet.UsedRange;
+            //List<string> lines = new List<string>();
+
+            //for (int i = 1; i <= xlRange.Rows.Count; i++)
+            //{
+            //    for (int j = 1; j <= xlRange.Columns.Count; j++)
+            //    {
+            //        if (xlRange[i, j] != null && xlRange.Cells[i, j].Value2 != null)
+            //        {
+            //            //Object x = xlRange.Cells[i, j].Value2;
+            //            //xlRange.Cells[i, j].Copy();
+            //            //Console.WriteLine(Clipboard.GetText(TextDataFormat.Rtf).ToString());
+            //            //lines.Add(Clipboard.GetText(TextDataFormat.Rtf));
+            //            lines.Add(xlRange.Cells[i, j].Value2.ToString());
+            //        }
+            //    }
+            //}
+
+            //GC.Collect();
+            //GC.WaitForPendingFinalizers();
+
+            ////release com objects to fully kill excel process from running in the background
+            //Marshal.ReleaseComObject(xlRange);
+            //Marshal.ReleaseComObject(xlWorksheet);
+
+            ////close and release
+            //xlWorkbook.Close();
+            //Marshal.ReleaseComObject(xlWorkbook);
+
+            ////quit and release
+            //xlApp.Quit();
+            //Marshal.ReleaseComObject(xlApp);
+
+            //return lines;
+
             Excel.Application xlApp = new Excel.Application();
             Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(fileDirectory);
             Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
@@ -94,7 +133,13 @@ namespace Infinite_Platoon_Card_Maker
                         //xlRange.Cells[i, j].Copy();
                         //Console.WriteLine(Clipboard.GetText(TextDataFormat.Rtf).ToString());
                         //lines.Add(Clipboard.GetText(TextDataFormat.Rtf));
-                        lines.Add(xlRange.Cells[i, j].Value2.ToString());
+
+                        string temp = xlRange.Cells[i, j].Value2.ToString();
+                        //Console.WriteLine(temp);
+                        //temp.Replace("\\b", "\b");
+                        //Console.WriteLine(temp);
+
+                        lines.Add(temp);
                     }
                 }
             }
@@ -131,7 +176,7 @@ namespace Infinite_Platoon_Card_Maker
                         for (int n = 1; n < rows; n++)
                         {
                             offset = 10 * n;
-
+                            Console.WriteLine("Hello");
                             heroes.Add(new heroCard((List[offset + 0]), int.Parse((List[offset + 1])), int.Parse((List[2 + offset])), int.Parse((List[3 + offset])), (List[4 + offset]), (List[5 + offset]), (List[6 + offset]), ((List[7 + offset]) == "" || (List[7 + offset]) == " ") ? " " : string.Concat("[", List[7 + offset], "]"), string.Concat("[", returnWithSign((List[8 + offset])) + " ATK]"), string.Concat("[", returnWithSign((List[9 + offset])), " DEF]")));
                         }
 
@@ -155,6 +200,7 @@ namespace Infinite_Platoon_Card_Maker
             TypeInput.Text = "";
             //EffectInput.Text = "";
             EffectInput.Document.Blocks.Clear();
+            EffectInput.AppendText(@"{\rtf1\ansi This is in \b bold\b0.}");
             //FlavorInput.Text = "";
             FlavorInput.Document.Blocks.Clear();
             AttackInput.Text = "";
@@ -238,6 +284,7 @@ namespace Infinite_Platoon_Card_Maker
             //effectText = EffectInput.Text;
             //effectBlock = EffectInput.Document.Blocks;
             TextRange temp = new TextRange(EffectInput.Document.ContentStart, EffectInput.Document.ContentEnd);
+            Console.WriteLine(temp.Text);
             effectText = temp.ToString();
             effectBlock = EffectInput.Document;
             //effectBlock.Inlines.Add(new Run(temp.Text));
@@ -413,7 +460,7 @@ namespace Infinite_Platoon_Card_Maker
 
             //Description.Document = createClockFromString(effectText);
             //Description.Document.Blocks.Add(new Paragraph(new Run(effectText)));
-            AddDocument(effectBlock, Description.Document);
+            AddDocument(FormatDoc(effectBlock), Description.Document);
             //Description.AppendText(flavorText);
             Description.AppendText("\n");
             AddDocument(flavorBlock, Description.Document);
@@ -429,11 +476,51 @@ namespace Infinite_Platoon_Card_Maker
             MemoryStream stream = new MemoryStream();
             System.Windows.Markup.XamlWriter.Save(range, stream);
             range.Save(stream, DataFormats.XamlPackage);
-
             TextRange range2 = new TextRange(to.ContentEnd, to.ContentEnd);
             range2.Load(stream, DataFormats.XamlPackage);
         }
 
+        public FlowDocument FormatDoc(FlowDocument from)
+        {
+            TextRange range = new TextRange(from.ContentStart, from.ContentEnd);
+            string[] strs = range.Text.Split('~');
+            string tempS;
+            char act;
+            FlowDocument newDoc = new FlowDocument();
+            Paragraph parag = new Paragraph();
+
+            foreach(string s in strs)
+            {
+                if (s.Length > 1)
+                {
+                    act = s[0];
+                    tempS = s.Substring(1, s.Length - 1);
+
+                    switch(act)
+                    {
+                        case ' ':
+                            parag.Inlines.Add(new Run(tempS));
+                            break;
+                        case 'b':
+                            parag.Inlines.Add(new Bold(new Run(tempS)));
+                            break;
+                        case 'i':
+                            parag.Inlines.Add(new Italic(new Run(tempS)));
+                            break;
+                        case 'u':
+                            parag.Inlines.Add(new Underline(new Run(tempS)));
+                            break;
+                        default:
+                            parag.Inlines.Add((new Run(tempS)));
+                            break;
+                    }
+                }
+            }
+
+            newDoc.Blocks.Add(parag);
+
+            return newDoc;
+        }
 
         #endregion
     }
